@@ -1,0 +1,7 @@
+#!/bin/bash
+set -e
+
+rm -rf .build
+swift build -c release
+echo "binary is in .build/release/export-contacts"
+
