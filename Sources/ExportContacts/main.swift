@@ -38,15 +38,17 @@ enum ContactsExport {
 
   }
 
-  static func fixLabel(index: Int, text: String?) -> String {
-    if text != nil {
+  static func addLabelValue(dict: inout [String: String], text: String?, value: String) {
+    var label = "-"
+    if text != nil && text != "" {
       let del = CharacterSet.alphanumerics.inverted
       let passed = text!.unicodeScalars.filter { !del.contains($0) }
-      return "\(index)-" + String(String.UnicodeScalarView(passed))
-
-    } else {
-      return "\(index)"
+      label = String(String.UnicodeScalarView(passed))
     }
+    while dict[label] != nil {
+      label = label + "."
+    }
+    dict[label] = value
   }
 
   static func encodeContact(contact: CNContact) -> [String: Any] {
@@ -107,51 +109,56 @@ enum ContactsExport {
 
     if contact.emailAddresses.count > 0 {
       var emailAddresses = [String: String]()
-      for (index, emailAddress) in contact.emailAddresses.enumerated() {
-        emailAddresses[fixLabel(index: index, text: emailAddress.label)] =
-          (emailAddress.value as String)
+      for (_, emailAddress) in contact.emailAddresses.enumerated() {
+        addLabelValue(
+          dict: &emailAddresses, text: emailAddress.label, value: (emailAddress.value as String))
       }
       res["emailAddresses"] = emailAddresses
     }
     if contact.phoneNumbers.count > 0 {
       var phoneNumbers = [String: String]()
-      for (index, phoneNumber) in contact.phoneNumbers.enumerated() {
-        phoneNumbers[fixLabel(index: index, text: phoneNumber.label)] =
-          phoneNumber.value.stringValue
+      for (_, phoneNumber) in contact.phoneNumbers.enumerated() {
+        addLabelValue(
+          dict: &phoneNumbers, text: phoneNumber.label, value: phoneNumber.value.stringValue)
       }
       res["phoneNumbers"] = phoneNumbers
     }
     if contact.postalAddresses.count > 0 {
       var postalAddresses = [String: String]()
-      for (index, postalAddress) in contact.postalAddresses.enumerated() {
-        postalAddresses[fixLabel(index: index, text: postalAddress.label)] =
-          (CNPostalAddressFormatter.string(from: postalAddress.value, style: .mailingAddress))
+      for (_, postalAddress) in contact.postalAddresses.enumerated() {
+        addLabelValue(
+          dict: &postalAddresses, text: postalAddress.label,
+          value: (CNPostalAddressFormatter.string(from: postalAddress.value, style: .mailingAddress))
+        )
       }
       res["postalAddresses"] = postalAddresses
     }
 
     if contact.urlAddresses.count > 0 {
       var urlAddresses = [String: String]()
-      for (index, urlAddress) in contact.urlAddresses.enumerated() {
-        urlAddresses[fixLabel(index: index, text: urlAddress.label)] = urlAddress.value as String
+      for (_, urlAddress) in contact.urlAddresses.enumerated() {
+        addLabelValue(
+          dict: &urlAddresses, text: urlAddress.label, value: urlAddress.value as String)
       }
       res["urlAddresses"] = urlAddresses
     }
 
     if contact.instantMessageAddresses.count > 0 {
       var instantMessageAddresses = [String: String]()
-      for (index, instantMessageAddress) in contact.instantMessageAddresses.enumerated() {
-        instantMessageAddresses[fixLabel(index: index, text: instantMessageAddress.label)] =
-          instantMessageAddress.value.username + " - " + instantMessageAddress.value.service
+      for (_, instantMessageAddress) in contact.instantMessageAddresses.enumerated() {
+        addLabelValue(
+          dict: &instantMessageAddresses, text: instantMessageAddress.label,
+          value: instantMessageAddress.value.username + " - " + instantMessageAddress.value.service)
       }
       res["instantMessageAddresses"] = instantMessageAddresses
     }
 
     if contact.socialProfiles.count > 0 {
       var socialProfiles = [String: String]()
-      for (index, socialProfile) in contact.socialProfiles.enumerated() {
-        socialProfiles[fixLabel(index: index, text: socialProfile.label)] =
-          socialProfile.value.username + " - " + socialProfile.value.service
+      for (_, socialProfile) in contact.socialProfiles.enumerated() {
+        addLabelValue(
+          dict: &socialProfiles, text: socialProfile.label,
+          value: socialProfile.value.username + " - " + socialProfile.value.service)
       }
       res["socialProfiles"] = socialProfiles
     }
